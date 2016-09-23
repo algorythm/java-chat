@@ -5,10 +5,9 @@ import java.net.*;
 import java.io.*;
 
 public class Server implements Runnable {
-    private Socket          socket   = null;
     private ServerSocket    server   = null;
     private Thread          thread   = null; // Update 1
-    private DataInputStream streamIn = null;
+    private ServerThread    client   = null; // Update 2
 
     public Server (int port) {
         try {
@@ -26,6 +25,29 @@ public class Server implements Runnable {
         }
     }
 
+    public void run() {
+        while (thread != null) {
+            try {
+                System.out.println("Waiting for a client ...");
+                addThread(server.accept());
+            } catch (IOException ie) {
+                System.out.println("Acceptance Error: " + ie);
+            }
+        }
+    }
+
+    public void addThread (Socket socket) {
+        System.out.println("Client accepted: " + socket);
+        client = new ServerThread(this, socket);
+
+        try {
+            client.open();
+            client.start();
+        } catch (IOException ioe) {
+            System.out.println("Error opening thread: " + ioe);
+        }
+    }
+
     public void start() {
         if (thread == null) {
             thread = new Thread(this);
@@ -38,44 +60,5 @@ public class Server implements Runnable {
             thread.stop();
             thread = null;
         }
-    }
-
-    public void run() {
-        while (thread != null) {
-            try {
-                System.out.println("Waiting for a client ...");
-
-                // I don't know what it does.
-                socket = server.accept();
-
-                System.out.println("Client accepted: " + socket);
-                open();
-
-                boolean done = false;
-                while(!done) {
-                    try {
-                        String line = streamIn.readUTF();
-                        System.out.println(line);
-                        done = line.equals(".bye");
-                    } catch (IOException ioe) {
-                        done = true;
-                    }
-                }
-
-                close();
-
-            } catch (IOException ie) {
-                System.out.println("Acceptance Error: " + ie);
-            }
-        }
-    }
-
-    public void open() throws IOException {
-        streamIn = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-    }
-
-    public void close() throws IOException {
-        if (socket   != null) socket.close();
-        if (streamIn != null) streamIn.close();
     }
 }
