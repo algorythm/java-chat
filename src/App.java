@@ -2,6 +2,8 @@
  * Created by awo on 23/09/16.
  */
 
+// http://pirate.shu.edu/~wachsmut/Teaching/CSAS2214/Virtual/Lectures/chat-client-server.html
+
 import java.util.Scanner;
 
 public class App {
