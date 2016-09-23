@@ -4,9 +4,10 @@
 import java.net.*;
 import java.io.*;
 
-public class Server {
+public class Server implements Runnable {
     private Socket          socket   = null;
     private ServerSocket    server   = null;
+    private Thread          thread   = null; // Update 1
     private DataInputStream streamIn = null;
 
     public Server (int port) {
@@ -17,28 +18,55 @@ public class Server {
             server = new ServerSocket(port);
 
             System.out.println("Server started: " + server);
-            System.out.println("Waiting for a client ...");
 
-            // I don't know what it does.
-            socket = server.accept();
-
-            System.out.println("Client accepted: " + socket);
-            open();
-
-            boolean done = false;
-            while(!done) {
-                try {
-                    String line = streamIn.readUTF();
-                    System.out.println(line);
-                    done = line.equals(".bye");
-                } catch (Exception ex) {
-                    done = true;
-                }
-            }
-            close();
+            start();
 
         } catch (IOException ioe) {
             System.out.println(ioe);
+        }
+    }
+
+    public void start() {
+        if (thread == null) {
+            thread = new Thread(this);
+            thread.start();
+        }
+    }
+
+    public void stop() {
+        if (thread != null) {
+            thread.stop();
+            thread = null;
+        }
+    }
+
+    public void run() {
+        while (thread != null) {
+            try {
+                System.out.println("Waiting for a client ...");
+
+                // I don't know what it does.
+                socket = server.accept();
+
+                System.out.println("Client accepted: " + socket);
+                open();
+
+                boolean done = false;
+                while(!done) {
+                    try {
+                        String line = streamIn.readUTF();
+                        System.out.println(line);
+                        done = line.equals(".bye");
+                    } catch (IOException ioe) {
+                        done = true;
+                    }
+                }
+
+                close();
+
+            } catch (IOException ie) {
+                System.out.println("Acceptance Error: " + ie);
+            }
         }
     }
 
